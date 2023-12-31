@@ -86,8 +86,19 @@ class World {
             this.layers[layer].push(body);
         }
     }
-    addConstraint(type, data, stiffness = 1, bias = 0.3) {
-        this.constraints.push([type, data, stiffness, bias]);
+    /**
+     * Adds a velocity constraint
+     * 
+     * `J * v + (beta/dt) * C + gamma * lambda = 0`  
+     * `v += dt * M^-1 * J^T * lambda`
+     * @param {"anchor" | "distance" | "union" | "joint"} type - "anchor," "distance," "union," or "joint"
+     * @param {*} data - If "anchor," `{ body, anchor, point }`; if "distance," `{ body1, anchor1, body2, anchor2, distance }`; if "union," `{ body1, body2, pos, rot }`; if "joint," `{ body1, anchor1, body2, anchor2 }`
+     * @param {"hard" | "oscillation" | "decay"} parameterization - "hard," "oscillation," or "decay"
+     * @param {number} beta - If "hard," `beta`; if "oscillation," frequency; if "decay," half-life
+     * @param {number} gamma - If "hard," `gamma * effective mass`; if "oscillation," half-life; if "decay," none
+     */
+    addConstraint(type, data, parameterization = ["hard", "oscillation", "decay"][0], beta = 0.3, gamma = 0) {
+        this.constraints.push([type, data, parameterization, beta, gamma]);
     }
     collidable(body1, body2) {
         if(this.layers.main.includes(body1) || this.layers.main.includes(body2)) return true;
@@ -105,7 +116,25 @@ class World {
     solveConstraints(dt) {
         for(let i = 0; i < this.constraints.length; i += 1) {
             const constraint = this.constraints[i];
-            const [type, data, stiffness, bias] = constraint;
+            let [type, data, parameterization, beta, gamma] = constraint;
+            switch(parameterization) {
+                case "hard": {
+                    beta /= dt;
+                    gamma = -1 / (1 + gamma / dt);
+                } break;
+                case "oscillation": {
+                    const omega = 2 * Math.PI * beta, zeta = Math.log(2) / gamma;
+                    const c = 2 * zeta, k = omega * omega;
+                    beta = k / (c + dt * k);
+                    gamma = -1 / (1 + 1 / (c * dt + k * dt * dt));
+                } break;
+                case "decay": {
+                    const omega = Math.log(2) / beta, zeta = 1;
+                    const c = 2 * omega * zeta, k = omega * omega;
+                    beta = k / (c + dt * k);
+                    gamma = -1 / (1 + 1 / (c * dt + k * dt * dt));
+                } break;
+            }
             switch(type) {
                 case "anchor": {
                     let { body, anchor, point } = data;
@@ -122,7 +151,16 @@ class World {
                         [         0,          0, body.iinertia]
                     ];
                     const iMJT = math.multiply(iM, math.transpose(J));
-                    const solved = math.multiply(iMJT, math.multiply(math.pinv(math.multiply(J, iMJT)), math.multiply(math.add(math.multiply(J, og), math.multiply(b, bias / dt)), -stiffness)));
+                    const solved = math.multiply(
+                        iMJT,
+                        math.multiply(
+                            math.pinv(math.multiply(J, iMJT)),
+                            math.multiply(
+                                math.add(math.multiply(J, og), math.multiply(b, beta)),
+                                gamma
+                            )
+                        )
+                    );
                     body.vel.x += solved[0];
                     body.vel.y += solved[1];
                     body.rvel += solved[2];
@@ -157,7 +195,16 @@ class World {
                         [0, 0, 0, 0, 0, body2.iinertia]
                     ];
                     const iMJT = math.multiply(iM, math.transpose(J));
-                    const solved = math.multiply(iMJT, math.multiply(math.pinv(math.multiply(J, iMJT)), math.multiply(math.add(math.multiply(J, og), math.multiply(b, bias / dt)), -stiffness)));
+                    const solved = math.multiply(
+                        iMJT,
+                        math.multiply(
+                            math.pinv(math.multiply(J, iMJT)),
+                            math.multiply(
+                                math.add(math.multiply(J, og), math.multiply(b, beta)),
+                                gamma
+                            )
+                        )
+                    );
                     body1.vel.x += solved[0];
                     body1.vel.y += solved[1];
                     body1.rvel += solved[2];
@@ -188,7 +235,16 @@ class World {
                         [0, 0, 0, 0, 0, body2.iinertia]
                     ];
                     const iMJT = math.multiply(iM, math.transpose(J));
-                    const solved = math.multiply(iMJT, math.multiply(math.pinv(math.multiply(J, iMJT)), math.multiply(math.add(math.multiply(J, og), math.multiply(b, bias / dt)), -stiffness)));
+                    const solved = math.multiply(
+                        iMJT,
+                        math.multiply(
+                            math.pinv(math.multiply(J, iMJT)),
+                            math.multiply(
+                                math.add(math.multiply(J, og), math.multiply(b, beta)),
+                                gamma
+                            )
+                        )
+                    );
                     body1.vel.x += solved[0];
                     body1.vel.y += solved[1];
                     body1.rvel += solved[2];
@@ -218,7 +274,16 @@ class World {
                         [0, 0, 0, 0, 0, body2.iinertia]
                     ];
                     const iMJT = math.multiply(iM, math.transpose(J));
-                    const solved = math.multiply(iMJT, math.multiply(math.pinv(math.multiply(J, iMJT)), math.multiply(math.add(math.multiply(J, og), math.multiply(b, bias / dt)), -stiffness)));
+                    const solved = math.multiply(
+                        iMJT,
+                        math.multiply(
+                            math.pinv(math.multiply(J, iMJT)),
+                            math.multiply(
+                                math.add(math.multiply(J, og), math.multiply(b, beta)),
+                                gamma
+                            )
+                        )
+                    );
                     body1.vel.x += solved[0];
                     body1.vel.y += solved[1];
                     body1.rvel += solved[2];
@@ -238,7 +303,6 @@ class World {
         }
 
         // velocity constraints
-        this.solveConstraints(dt);
         for(let i = 0; i < this.bodies.length - 1; i += 1) {
             const body = this.bodies[i];
             for(let j = i + 1; j < this.bodies.length; j += 1) {
@@ -345,6 +409,7 @@ class World {
                 }
             }
         }
+        this.solveConstraints(dt);
 
         // integrate position
         for(let i = 0; i < this.bodies.length; i += 1) {
@@ -490,7 +555,7 @@ class Circle {
     constructor(x = 0, y = 0, radius = 10) {
         this.pos = V.V(x, y);
         this.radius = radius;
-        this.bounding = radius;
+        this.bounding = radius + V.mag(this.pos);
     }
     pointInside(localPoint) {
         return localPoint.x * localPoint.x + localPoint.y * localPoint.y < this.radius * this.radius;
@@ -510,7 +575,7 @@ class Circle {
  * @returns {[[[{ pointOnIncident, pointOnReference, penetration }], referenceNormal, incidentNormal, referenceBody, incidentBody]]} - 
  */
 function getManifolds(body1, body2) {
-    if((body2.pos.x - body1.pos.x) * (body2.pos.x - body1.pos.x) + (body2.pos.y - body1.pos.y) * (body2.pos.y - body1.pos.y) > (body1.bounding + body2.bounding) * (body1.bounding + body2.bounding)) return false;
+    if((body2.pos.x - body1.pos.x) * (body2.pos.x - body1.pos.x) + (body2.pos.y - body1.pos.y) * (body2.pos.y - body1.pos.y) > (body1.shape.bounding + body2.shape.bounding) * (body1.shape.bounding + body2.shape.bounding)) return false;
     let shapesSwapped = 0;
     let shape1 = body1.shape.world(body1.transform()),
         shape2 = body2.shape.world(body2.transform());
@@ -521,6 +586,7 @@ function getManifolds(body1, body2) {
     }
     if(body1.shape instanceof Circle) {
         if(body2.shape instanceof Circle) {
+            if((shape2.pos.x - shape1.pos.x) * (shape2.pos.x - shape1.pos.x) + (shape2.pos.y - shape1.pos.y) * (shape2.pos.y - shape1.pos.y) > (shape1.radius + shape2.radius) * (shape1.radius * shape2.radius)) return false;
             const v = V.sub(body1.pos, body2.pos);
             let d = V.mag(v);
             const penetration = shape1.radius + shape2.radius - d, referenceBody = body1, incidentBody = body2;

@@ -19,7 +19,7 @@
         <script src="../ji.js"></script>
     </head>
     <script>
-const world = new ji.World(0, 9.8);
+const world = new ji.World(0, 9.8 * 100);
 const ropeLength = 20;
 function setup() {
     createCanvas(1000, 800);
@@ -126,21 +126,30 @@ function draw() {
     background(255);
     const iterations = 6;
     for(let i = 0; i < iterations; i += 1) {
-        world.simulate(dt * 0.01 / iterations);
+        world.simulate(dt * 0.001 / iterations);
     }
     world.clearConstraints();
     noFill(255);
     stroke(0);
     strokeWeight(1);
     if(mouseIsPressed && anchor) {
-        world.addConstraint("anchor", {
-            body: anchorBody,
-            anchor,
-            point: ji.V.V(mouseX, mouseY),
-        }, mouseButton === LEFT ? 1 : 0.001);
-        const a = ji.V.mdot(anchorBody.transform(), anchor);
+        if(mouseButton === LEFT) {
+            world.addConstraint("anchor", {
+                body: anchorBody,
+                anchor,
+                point: ji.V.V(mouseX, mouseY),
+            });
+        }
+        else {
+            world.addConstraint("anchor", {
+                body: anchorBody,
+                anchor,
+                point: ji.V.V(mouseX, mouseY),
+            }, "oscillation", 1, 1);
+            const a = ji.V.mdot(anchorBody.transform(), anchor);
+            line(mouseX, mouseY, a.x, a.y);
+        }
         cursor("grabbing");
-        if(mouseButton === RIGHT) line(mouseX, mouseY, a.x, a.y);
     }
     world.addConstraint("distance", {
         body1: world.bodies[4],
