@@ -1,24 +1,3 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <title></title>
-        <style>
-            body {
-                margin: 0px;
-                overflow: hidden;
-            }
-            canvas {
-                margin: 0px;
-                padding: 0px;
-                /* border: 0px; */
-                border: 1px solid black;
-            }
-        </style>
-        <script src="libraries/p5.min.js"></script>
-        <script src="../math.min.js"></script>
-        <script src="../ji.js"></script>
-    </head>
-    <script>
 const world = new ji.World(0, 9.8 * 100);
 const ropeLength = 20;
 function setup() {
@@ -222,7 +201,3 @@ function draw() {
     }
     pt = t;
 }
-    </script>
-    <body oncontextmenu="return false;">
-    </body>
-</html>
