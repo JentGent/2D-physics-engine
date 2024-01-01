@@ -36,9 +36,6 @@ world.add(leftWheel, "wheels");
 world.add(rightWheel, "wheels");
 const terrain = {};
 const cam = { x: 0, y: 0 };
-function setup() {
-    createCanvas(1000, 800);
-}
 
 let keys = {};
 function keyPressed() {

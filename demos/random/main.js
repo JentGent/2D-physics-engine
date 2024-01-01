@@ -1,98 +1,96 @@
 const world = new ji.World(0, 9.8 * 100);
 const ropeLength = 20;
-function setup() {
-    createCanvas(1000, 800);
-    world.add(new ji.RigidBody({
-        pos: ji.V.V(width / 2, 0),
-        shape: new ji.shape.Box(0, 0, 0, width, 200),
-        mass: Infinity,
-        inertia: Infinity,
-        friction: Infinity,
-        static: true
-    }));
-    world.add(new ji.RigidBody({
-        pos: ji.V.V(width / 2, height),
-        shape: new ji.shape.Box(0, 0, 0, width, 200),
-        mass: Infinity,
-        inertia: Infinity,
-        friction: Infinity,
-        static: true
-    }));
-    world.add(new ji.RigidBody({
-        pos: ji.V.V(0, height / 2),
-        shape: new ji.shape.Box(0, 0, 0, 200, height),
-        mass: Infinity,
-        inertia: Infinity,
-        friction: Infinity,
-        static: true
-    }));
-    world.add(new ji.RigidBody({
-        pos: ji.V.V(width, height / 2),
-        shape: new ji.shape.Box(0, 0, 0, 200, height),
-        mass: Infinity,
-        inertia: Infinity,
-        friction: Infinity,
-        static: true
-    }));
 
+world.add(new ji.RigidBody({
+    pos: ji.V.V(width / 2, 0),
+    shape: new ji.shape.Box(0, 0, 0, width, 200),
+    mass: Infinity,
+    inertia: Infinity,
+    friction: Infinity,
+    static: true
+}));
+world.add(new ji.RigidBody({
+    pos: ji.V.V(width / 2, height),
+    shape: new ji.shape.Box(0, 0, 0, width, 200),
+    mass: Infinity,
+    inertia: Infinity,
+    friction: Infinity,
+    static: true
+}));
+world.add(new ji.RigidBody({
+    pos: ji.V.V(0, height / 2),
+    shape: new ji.shape.Box(0, 0, 0, 200, height),
+    mass: Infinity,
+    inertia: Infinity,
+    friction: Infinity,
+    static: true
+}));
+world.add(new ji.RigidBody({
+    pos: ji.V.V(width, height / 2),
+    shape: new ji.shape.Box(0, 0, 0, 200, height),
+    mass: Infinity,
+    inertia: Infinity,
+    friction: Infinity,
+    static: true
+}));
+
+world.add(new ji.RigidBody({
+    pos: ji.V.V(width / 2, height * 2 / 3 - 280),
+    rot: 0,
+    mass: 50,
+    inertia: 50000,
+    friction: 0.4,
+    shape: new ji.shape.Box(0, 0, 0, 100, 100)
+}));
+world.add(new ji.RigidBody({
+    pos: ji.V.V(width / 2, height * 2 / 3),
+    mass: 100,
+    inertia: 50000,
+    friction: 0.8,
+    shape: new ji.shape.Box(0, 0, 0, 100, 100)
+}));
+
+for(let i = 0; i < ropeLength; i += 1) {
     world.add(new ji.RigidBody({
-        pos: ji.V.V(width / 2, height * 2 / 3 - 280),
-        rot: 0,
-        mass: 50,
-        inertia: 50000,
+        pos: ji.V.V(width / 3, 110 + i * 25),
+        mass: 10,
+        inertia: 100,
         friction: 0.4,
-        shape: new ji.shape.Box(0, 0, 0, 100, 100)
+        shape: new ji.shape.Box(0, 0, 0, 10, 20)
     }));
-    world.add(new ji.RigidBody({
-        pos: ji.V.V(width / 2, height * 2 / 3),
-        mass: 100,
-        inertia: 50000,
-        friction: 0.8,
-        shape: new ji.shape.Box(0, 0, 0, 100, 100)
-    }));
+}
 
-    for(let i = 0; i < ropeLength; i += 1) {
-        world.add(new ji.RigidBody({
-            pos: ji.V.V(width / 3, 110 + i * 25),
-            mass: 10,
-            inertia: 100,
-            friction: 0.4,
-            shape: new ji.shape.Box(0, 0, 0, 10, 20)
-        }));
-    }
+world.add(new ji.RigidBody({
+    pos: ji.V.V(130, height - 100 - 50 - 50 / 2 - 150 / 2),
+    mass: 100,
+    inertia: 100000,
+    friction: 0.4,
+    shape: new ji.shape.Box(0, 0, 0, 50, 150)
+}));
+world.add(new ji.RigidBody({
+    pos: ji.V.V(130 + 200 / 2 - 50 / 2, height - 100 - 50),
+    mass: 100,
+    inertia: 100000,
+    friction: 0.4,
+    shape: new ji.shape.Box(0, 0, 0, 200, 50)
+}));
 
-    world.add(new ji.RigidBody({
-        pos: ji.V.V(130, height - 100 - 50 - 50 / 2 - 150 / 2),
-        mass: 100,
-        inertia: 100000,
-        friction: 0.4,
-        shape: new ji.shape.Box(0, 0, 0, 50, 150)
-    }));
-    world.add(new ji.RigidBody({
-        pos: ji.V.V(130 + 200 / 2 - 50 / 2, height - 100 - 50),
-        mass: 100,
-        inertia: 100000,
-        friction: 0.4,
-        shape: new ji.shape.Box(0, 0, 0, 200, 50)
-    }));
-
-    for(let j = 0; j < 3; j += 1) {
-        for(let k = 0; k < 3; k += 1) {
-            const shape = [];
-            for(let i = 0; i < 7; i += 1) {
-                const a = i * Math.PI * 2 / 7 + Math.random() * 0.2 - 0.1;
-                const r = Math.random() * 10 + 50;
-                shape.push(ji.V.V(Math.cos(a) * r, Math.sin(a) * r));
-            }
-            world.add(new ji.RigidBody({
-                pos: ji.V.V(width * 1/2 + 110 + j * 110, height / 2 + k * 110),
-                rot: 0,
-                mass: 100,
-                inertia: 100000,
-                friction: 1,
-                shape: (j + k) % 2 === 0 ? new ji.shape.Convex(shape) : new ji.shape.Circle(0, 0, Math.random() * 10 + 50)
-            }));
+for(let j = 0; j < 3; j += 1) {
+    for(let k = 0; k < 3; k += 1) {
+        const shape = [];
+        for(let i = 0; i < 7; i += 1) {
+            const a = i * Math.PI * 2 / 7 + Math.random() * 0.2 - 0.1;
+            const r = Math.random() * 10 + 50;
+            shape.push(ji.V.V(Math.cos(a) * r, Math.sin(a) * r));
         }
+        world.add(new ji.RigidBody({
+            pos: ji.V.V(width * 1/2 + 110 + j * 110, height / 2 + k * 110),
+            rot: 0,
+            mass: 100,
+            inertia: 100000,
+            friction: 1,
+            shape: (j + k) % 2 === 0 ? new ji.shape.Convex(shape) : new ji.shape.Circle(0, 0, Math.random() * 10 + 50)
+        }));
     }
 }
 
